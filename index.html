@@ -1,0 +1,430 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.app{max-width:680px;margin:0 auto;padding:2rem 1rem;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;}
+.tab-bar{display:flex;gap:4px;margin-bottom:2rem;background:#f5f4f2;border-radius:10px;padding:4px;}
+.tab{flex:1;padding:8px;font-size:13px;font-weight:500;border:none;background:transparent;cursor:pointer;border-radius:8px;color:#888;transition:all 0.15s;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;}
+.tab.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.section{display:none;}
+.section.active{display:block;}
+.card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1.25rem;margin-bottom:12px;}
+.label{font-size:11px;font-weight:500;color:#aaa;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px;display:block;}
+input[type=text],textarea,select{width:100%;font-size:13px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:8px 12px;border:0.5px solid rgba(0,0,0,0.12);border-radius:8px;background:#fafafa;color:#1a1a1a;outline:none;transition:border 0.15s;}
+input[type=text]:focus,textarea:focus{border-color:rgba(0,0,0,0.3);background:#fff;}
+textarea{resize:none;line-height:1.6;font-family:monospace;font-size:12px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-size:13px;font-weight:500;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;border-radius:8px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#1a1a1a;cursor:pointer;transition:all 0.15s;}
+.btn:hover{background:#f5f4f2;}
+.btn:active{transform:scale(0.98);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.btn-pink{background:#fce8f0;border-color:#f0b8d0;color:#b03060;}
+.btn-pink:hover{background:#f9d5e5;}
+.btn-lavender{background:#eeeaf8;border-color:#ccc4ee;color:#5a3fa0;}
+.btn-lavender:hover{background:#e5dffc;}
+.btn-sage{background:#e8f5ee;border-color:#b8ddc8;color:#2d7a50;}
+.btn-sage:hover{background:#d8edd8;}
+.btn-peach{background:#fef0e8;border-color:#f5cdb0;color:#b05020;}
+.btn-peach:hover{background:#fde5d5;}
+.btn-sky{background:#e8f4fd;border-color:#b0d4f0;color:#1a6090;}
+.btn-sky:hover{background:#d5eaf8;}
+.btn-full{width:100%;justify-content:center;padding:11px;}
+.franchise-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.franchise-header input{flex:1;}
+.btn-icon{padding:6px 8px;}
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.row-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;}
+.empty-state{text-align:center;padding:2.5rem 1rem;color:#bbb;font-size:14px;}
+.success-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#2d7a50;background:#e8f5ee;border-radius:6px;padding:3px 10px;margin-top:8px;}
+.section-title{font-size:18px;font-weight:500;color:#1a1a1a;margin-bottom:4px;}
+.section-sub{font-size:13px;color:#aaa;margin-bottom:1.5rem;}
+.divider{border:none;border-top:0.5px solid rgba(0,0,0,0.08);margin:1.5rem 0;}
+.folder-block{border:0.5px solid rgba(0,0,0,0.08);border-radius:10px;margin-bottom:8px;overflow:hidden;}
+.folder-toggle{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fafafa;cursor:pointer;border:none;width:100%;text-align:left;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:500;color:#1a1a1a;transition:background 0.1s;}
+.folder-toggle:hover{background:#f2f0f0;}
+.folder-toggle .chevron{margin-left:auto;font-size:13px;color:#aaa;transition:transform 0.2s;}
+.folder-toggle.open .chevron{transform:rotate(180deg);}
+.folder-count{font-size:11px;background:#f0ecfc;color:#7060c0;border-radius:5px;padding:2px 7px;}
+.folder-items{display:none;padding:8px;}
+.folder-items.open{display:block;}
+.history-item{display:flex;align-items:flex-start;gap:10px;padding:8px 6px;border-radius:8px;}
+.history-item:hover{background:#fafafa;}
+.history-meta{flex:1;min-width:0;}
+.history-title{font-size:13px;font-weight:500;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.history-channel{font-size:11px;color:#888;margin-top:1px;}
+.history-url{font-size:10px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.credits-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.credits-tab{padding:5px 12px;font-size:12px;font-weight:500;border-radius:6px;border:0.5px solid rgba(0,0,0,0.1);background:#fff;color:#888;cursor:pointer;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;transition:all 0.15s;}
+.credits-tab.active{background:#eeeaf8;border-color:#ccc4ee;color:#5a3fa0;}
+.credits-box{background:#fafafa;border:0.5px solid rgba(0,0,0,0.1);border-radius:8px;padding:12px;font-size:12px;font-family:monospace;line-height:1.8;color:#444;white-space:pre-wrap;max-height:200px;overflow-y:auto;}
+</style>
+
+<div class="app">
+  <h2 class="sr-only">B-roll manager</h2>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('download',this)"><i class="ti ti-download" aria-hidden="true"></i> descargar</button>
+    <button class="tab" onclick="switchTab('history',this)"><i class="ti ti-history" aria-hidden="true"></i> historial & créditos</button>
+    <button class="tab" onclick="switchTab('config',this)"><i class="ti ti-settings" aria-hidden="true"></i> configuración</button>
+  </div>
+
+  <!-- DOWNLOAD -->
+  <div id="tab-download" class="section active">
+    <p class="section-title">generar script de descarga</p>
+    <p class="section-sub">Pega tus links por franquicia — se guardan automáticamente en el historial.</p>
+    <div id="franchises-container"></div>
+    <button class="btn btn-lavender btn-full" onclick="addFranchise()" style="margin-bottom:1rem;">
+      <i class="ti ti-plus" aria-hidden="true"></i> agregar franquicia / fuente
+    </button>
+    <div class="row-btns">
+      <button class="btn btn-pink btn-full" onclick="downloadScript('win-download')">
+        <i class="ti ti-brand-windows" aria-hidden="true"></i> descargar .bat
+      </button>
+      <button class="btn btn-sky btn-full" onclick="downloadScript('mac-download')">
+        <i class="ti ti-brand-apple" aria-hidden="true"></i> descargar .sh
+      </button>
+      <button class="btn btn-sage btn-full" onclick="downloadScript('upload')">
+        <i class="ti ti-cloud-upload" aria-hidden="true"></i> subir a Drive .bat
+      </button>
+    </div>
+    <p id="dl-success" style="display:none;" class="success-pill"><i class="ti ti-circle-check" aria-hidden="true"></i> <span id="dl-success-msg">archivo descargado</span></p>
+    <p id="dl-error" style="display:none;font-size:12px;color:#b03060;margin-top:8px;"></p>
+
+    <div style="margin-top:1rem;padding:10px 14px;background:#f5f4f2;border-radius:8px;">
+      <p style="font-size:12px;color:#aaa;margin-bottom:4px;font-weight:500;"><i class="ti ti-brand-apple" aria-hidden="true"></i> cómo usar el .sh en Mac</p>
+      <p style="font-size:12px;color:#888;line-height:1.7;">Después de descargar, abre Terminal y corre:<br>
+      <code style="font-size:11px;background:#eee;padding:2px 6px;border-radius:4px;">chmod +x ~/Downloads/descargar_broll.sh && ~/Downloads/descargar_broll.sh</code><br>
+      <span style="margin-top:4px;display:block;">Mac pedirá acceso a Safari la primera vez — acepta.</span></p>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="tab-history" class="section">
+    <p class="section-title">historial & créditos</p>
+    <p class="section-sub">Los links se agregan automáticamente desde la pestaña de descarga.</p>
+    <div id="history-list"></div>
+    <hr class="divider" />
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <p style="font-size:13px;font-weight:500;color:#1a1a1a;">créditos</p>
+        <button class="btn btn-lavender" onclick="copyCredits()"><i class="ti ti-copy" aria-hidden="true"></i> copiar selección</button>
+      </div>
+      <div class="credits-tabs" id="credits-tabs"></div>
+      <div id="credits-box" class="credits-box"></div>
+      <p id="copy-confirm" style="display:none;" class="success-pill"><i class="ti ti-circle-check" aria-hidden="true"></i> ¡copiado!</p>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="tab-config" class="section">
+    <p class="section-title">configuración</p>
+    <p class="section-sub">Rutas para Windows y Mac — se guardan automáticamente.</p>
+    <div class="card">
+      <p style="font-size:12px;font-weight:500;color:#888;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-brand-windows" aria-hidden="true"></i> Windows</p>
+      <div class="config-grid">
+        <div><span class="label">ruta de yt-dlp.exe</span><input type="text" id="cfg-ytdlp" oninput="saveConfig()" /></div>
+        <div><span class="label">ruta de cookies.txt</span><input type="text" id="cfg-cookies" oninput="saveConfig()" /></div>
+        <div><span class="label">carpeta base (Windows)</span><input type="text" id="cfg-base-win" oninput="saveConfig()" /></div>
+        <div><span class="label">remoto rclone (Drive)</span><input type="text" id="cfg-rclone" oninput="saveConfig()" /></div>
+      </div>
+    </div>
+    <div class="card">
+      <p style="font-size:12px;font-weight:500;color:#888;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-brand-apple" aria-hidden="true"></i> Mac</p>
+      <div class="config-grid">
+        <div><span class="label">carpeta base (Mac)</span><input type="text" id="cfg-base-mac" oninput="saveConfig()" /></div>
+      </div>
+      <p style="font-size:12px;color:#bbb;margin-top:10px;"><i class="ti ti-info-circle" style="font-size:12px;" aria-hidden="true"></i> Mac usa Safari automáticamente — no necesitas configurar cookies.</p>
+    </div>
+    <div class="card">
+      <span class="label">datos</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+        <button class="btn" onclick="clearHistory()"><i class="ti ti-trash" aria-hidden="true"></i> borrar historial</button>
+        <button class="btn btn-peach" onclick="exportHistory()"><i class="ti ti-file-export" aria-hidden="true"></i> exportar historial (.txt)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK_HISTORY='broll_history_v2',SK_FRANCHISES='broll_franchises_v2',SK_CONFIG='broll_config_v4';
+let franchises=[],history=[],nextFId=0,activeCreditFolder='__all__',folderOpenState={};
+let config={ytdlp:'C:\\yt-dlp\\yt-dlp.exe',cookies:'C:\\yt-dlp\\cookies.txt',baseWin:'C:\\broll',baseMac:'~/broll',rclone:'gdrive'};
+
+function loadAll(){
+  try{history=JSON.parse(localStorage.getItem(SK_HISTORY))||[];}catch(e){history=[];}
+  try{const f=JSON.parse(localStorage.getItem(SK_FRANCHISES));if(f&&f.length){franchises=f;nextFId=franchises.reduce((m,x)=>Math.max(m,x.id+1),0);}}catch(e){}
+  try{const c=JSON.parse(localStorage.getItem(SK_CONFIG));if(c)config={...config,...c};}catch(e){}
+  if(franchises.length===0)addFranchise('Resident Evil','');
+  else renderFranchises();
+  applyConfig();renderHistory();renderCreditsTabs();renderCreditsBox();
+}
+
+function saveConfig(){
+  config.ytdlp=document.getElementById('cfg-ytdlp').value;
+  config.cookies=document.getElementById('cfg-cookies').value;
+  config.baseWin=document.getElementById('cfg-base-win').value;
+  config.baseMac=document.getElementById('cfg-base-mac').value;
+  config.rclone=document.getElementById('cfg-rclone').value;
+  localStorage.setItem(SK_CONFIG,JSON.stringify(config));
+}
+function applyConfig(){
+  document.getElementById('cfg-ytdlp').value=config.ytdlp;
+  document.getElementById('cfg-cookies').value=config.cookies;
+  document.getElementById('cfg-base-win').value=config.baseWin;
+  document.getElementById('cfg-base-mac').value=config.baseMac;
+  document.getElementById('cfg-rclone').value=config.rclone;
+}
+
+function switchTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='history'){renderHistory();renderCreditsTabs();renderCreditsBox();}
+}
+
+function addFranchise(name='',links=''){
+  const id=nextFId++;
+  franchises.push({id,name,links});
+  saveFranchises();renderFranchises();
+}
+function removeFranchise(id){
+  franchises=franchises.filter(f=>f.id!==id);
+  saveFranchises();renderFranchises();
+}
+function updateFranchise(id,field,value){
+  const f=franchises.find(f=>f.id===id);
+  if(f){f[field]=value;saveFranchises();}
+}
+function saveFranchises(){localStorage.setItem(SK_FRANCHISES,JSON.stringify(franchises));}
+
+function renderFranchises(){
+  const c=document.getElementById('franchises-container');
+  if(franchises.length===0){c.innerHTML=`<div class="empty-state"><i class="ti ti-folder-off" style="font-size:28px;display:block;margin-bottom:8px;" aria-hidden="true"></i>Sin franquicias aún</div>`;return;}
+  c.innerHTML=franchises.map(f=>`
+    <div class="card">
+      <div class="franchise-header">
+        <i class="ti ti-folder" style="font-size:16px;color:#bbb;" aria-hidden="true"></i>
+        <input type="text" placeholder="nombre (ej: Resident Evil, State of Play, X-Twitter)" value="${esc(f.name)}" oninput="updateFranchise(${f.id},'name',this.value)" />
+        <button class="btn btn-icon" onclick="removeFranchise(${f.id})" aria-label="eliminar"><i class="ti ti-trash" style="font-size:15px;" aria-hidden="true"></i></button>
+      </div>
+      <textarea rows="4" placeholder="links de YouTube o X/Twitter, uno por línea — para bajar solo un fragmento agrega el rango después del link: https://youtu.be/xxxx 2:15-2:25" oninput="updateFranchise(${f.id},'links',this.value);syncLinksToHistory(${f.id})">${esc(f.links)}</textarea>
+      <p style="font-size:11px;color:#ccc;margin-top:6px;"><i class="ti ti-scissors" style="font-size:11px;" aria-hidden="true"></i> tip: agrega un rango tipo <code style="background:#f2f0f0;padding:1px 5px;border-radius:4px;">2:15-2:25</code> después de un link para bajar solo ese fragmento</p>
+    </div>
+  `).join('');
+}
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function sanitize(s){return(s||'').trim().replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'');}
+
+const TIME_RANGE_RE=/^\d{1,2}(:\d{2}){1,2}-\d{1,2}(:\d{2}){1,2}$/;
+function parseLinkLine(line){
+  const parts=line.trim().split(/\s+/);
+  const url=parts[0];
+  const section=(parts[1]&&TIME_RANGE_RE.test(parts[1]))?parts[1]:null;
+  return{url,section};
+}
+function parseLinks(rawText){
+  return rawText.split('\n').map(l=>l.trim()).filter(l=>l.startsWith('http')).map(parseLinkLine);
+}
+function sectionTag(section){return section?section.replace(/:/g,'-'):'';}
+
+async function fetchVideoInfo(url){
+  if(url.includes('youtube.com')||url.includes('youtu.be')){
+    const vid=url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
+    if(!vid)return{title:url,channel:'desconocido',platform:'YouTube'};
+    try{const r=await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${vid}&format=json`);if(!r.ok)throw new Error();const d=await r.json();return{title:d.title,channel:d.author_name,platform:'YouTube'};}
+    catch(e){return{title:url,channel:'desconocido',platform:'YouTube'};}
+  }
+  if(url.includes('x.com')||url.includes('twitter.com')){
+    const match=url.match(/(?:x\.com|twitter\.com)\/([^\/]+)\/status/);
+    return{title:'Tweet',channel:match?.[1]?`@${match[1]}`:'X / Twitter',platform:'X / Twitter'};
+  }
+  return{title:url,channel:'desconocido',platform:'otro'};
+}
+
+async function syncLinksToHistory(franchiseId){
+  const f=franchises.find(x=>x.id===franchiseId);
+  if(!f)return;
+  const parsed=parseLinks(f.links);
+  const folder=f.name||'sin carpeta';
+  const keyOf=(url,section)=>url+'|'+(section||'');
+  for(const{url,section}of parsed){
+    const exists=history.find(h=>keyOf(h.url,h.section)===keyOf(url,section));
+    if(exists){if(exists.folder!==folder){exists.folder=folder;localStorage.setItem(SK_HISTORY,JSON.stringify(history));}continue;}
+    const entry={id:Date.now()+Math.random(),url,section,folder,title:'cargando...',channel:'...',platform:'',addedAt:new Date().toLocaleDateString('es-MX'),loading:true};
+    history.unshift(entry);
+    localStorage.setItem(SK_HISTORY,JSON.stringify(history));
+    fetchVideoInfo(url).then(info=>{
+      const h=history.find(x=>keyOf(x.url,x.section)===keyOf(url,section));
+      if(h){h.title=info.title;h.channel=info.channel;h.platform=info.platform;h.loading=false;localStorage.setItem(SK_HISTORY,JSON.stringify(history));renderHistory();renderCreditsTabs();renderCreditsBox();}
+    });
+  }
+  const currentKeys=parsed.map(p=>keyOf(p.url,p.section));
+  history=history.filter(h=>h.folder!==folder||currentKeys.includes(keyOf(h.url,h.section)));
+  localStorage.setItem(SK_HISTORY,JSON.stringify(history));
+  renderHistory();renderCreditsTabs();renderCreditsBox();
+}
+
+function removeHistoryItem(id){
+  history=history.filter(h=>h.id!==id);
+  localStorage.setItem(SK_HISTORY,JSON.stringify(history));
+  renderHistory();renderCreditsTabs();renderCreditsBox();
+}
+
+function toggleFolder(folder){folderOpenState[folder]=!folderOpenState[folder];renderHistory();}
+
+function renderHistory(){
+  const c=document.getElementById('history-list');
+  if(history.length===0){c.innerHTML=`<div class="empty-state"><i class="ti ti-history" style="font-size:28px;display:block;margin-bottom:8px;" aria-hidden="true"></i>Agrega links en la pestaña de descarga — aparecen aquí automáticamente</div>`;return;}
+  const grouped={};
+  history.forEach(h=>{const k=h.folder||'sin carpeta';if(!grouped[k])grouped[k]=[];grouped[k].push(h);});
+  c.innerHTML=Object.entries(grouped).map(([folder,items])=>{
+    if(folderOpenState[folder]===undefined)folderOpenState[folder]=true;
+    const isOpen=folderOpenState[folder];
+    return `<div class="folder-block">
+      <button class="folder-toggle ${isOpen?'open':''}" onclick="toggleFolder('${esc(folder)}')">
+        <i class="ti ti-folder" style="font-size:15px;color:#c0b0e0;" aria-hidden="true"></i>
+        ${esc(folder)}<span class="folder-count">${items.length}</span>
+        <i class="ti ti-chevron-down chevron" aria-hidden="true"></i>
+      </button>
+      <div class="folder-items ${isOpen?'open':''}">
+        ${items.map(h=>`<div class="history-item">
+          <div style="margin-top:2px;color:#ccc;font-size:13px;"><i class="ti ti-${h.platform==='YouTube'?'brand-youtube':h.platform==='X / Twitter'?'brand-x':'link'}" aria-hidden="true"></i></div>
+          <div class="history-meta">
+            <div class="history-title">${esc(h.loading?h.url:h.title)}${h.section?` <span style="font-size:10px;font-weight:500;color:#7060c0;background:#f0ecfc;border-radius:5px;padding:1px 6px;">${esc(h.section)}</span>`:''}</div>
+            <div class="history-channel">${h.loading?'buscando canal...':esc(h.channel)+' · '+h.addedAt}</div>
+            <div class="history-url">${esc(h.url)}</div>
+          </div>
+          <button class="btn btn-icon" onclick="removeHistoryItem(${h.id})" aria-label="eliminar"><i class="ti ti-trash" style="font-size:13px;color:#ddd;" aria-hidden="true"></i></button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getFolders(){const seen=new Set();history.forEach(h=>seen.add(h.folder||'sin carpeta'));return Array.from(seen);}
+
+function renderCreditsTabs(){
+  const folders=getFolders();
+  const c=document.getElementById('credits-tabs');
+  if(folders.length===0){c.innerHTML='';return;}
+  if(!folders.includes(activeCreditFolder)&&activeCreditFolder!=='__all__')activeCreditFolder='__all__';
+  c.innerHTML=[{id:'__all__',label:'todas'},...folders.map(f=>({id:f,label:f}))].map(t=>`<button class="credits-tab ${activeCreditFolder===t.id?'active':''}" onclick="setCreditsFolder('${esc(t.id)}')">${esc(t.label)}</button>`).join('');
+}
+
+function setCreditsFolder(folder){activeCreditFolder=folder;renderCreditsTabs();renderCreditsBox();}
+
+function renderCreditsBox(){
+  const box=document.getElementById('credits-box');
+  const items=activeCreditFolder==='__all__'?history:history.filter(h=>(h.folder||'sin carpeta')===activeCreditFolder);
+  if(items.length===0){box.textContent='Sin links en esta carpeta todavía.';return;}
+  if(activeCreditFolder==='__all__'){
+    const grouped={};items.forEach(h=>{const k=h.folder||'sin carpeta';if(!grouped[k])grouped[k]=[];grouped[k].push(h);});
+    let txt='';for(const[f,its]of Object.entries(grouped)){txt+=`── ${f.toUpperCase()} ──\n`;its.forEach(h=>{txt+=`• "${h.loading?h.url:h.title}" por ${h.loading?'...':h.channel}\n  ${h.url}\n`;});txt+='\n';}
+    box.textContent=txt.trim();
+  }else{
+    let txt=`── ${activeCreditFolder.toUpperCase()} ──\n`;
+    items.forEach(h=>{txt+=`• "${h.loading?h.url:h.title}" por ${h.loading?'...':h.channel}\n  ${h.url}\n`;});
+    box.textContent=txt.trim();
+  }
+}
+
+function copyCredits(){
+  navigator.clipboard.writeText(document.getElementById('credits-box').textContent).then(()=>{
+    const p=document.getElementById('copy-confirm');p.style.display='inline-flex';setTimeout(()=>p.style.display='none',2500);
+  });
+}
+
+function clearHistory(){
+  if(!confirm('¿Segura que quieres borrar todo el historial?'))return;
+  history=[];localStorage.removeItem(SK_HISTORY);renderHistory();renderCreditsTabs();renderCreditsBox();
+}
+
+function exportHistory(){
+  const folders=getFolders();let full='';
+  folders.forEach(folder=>{
+    const items=history.filter(h=>(h.folder||'sin carpeta')===folder);
+    full+=`── ${folder.toUpperCase()} ──\n`;
+    items.forEach(h=>{full+=`• "${h.title}" por ${h.channel}\n  ${h.url}\n`;});full+='\n';
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([full.trim()],{type:'text/plain'}));
+  a.download='creditos_broll.txt';a.click();
+}
+
+function buildWinDownload(){
+  const BASE=config.baseWin,YTDLP=config.ytdlp,COOKIES=config.cookies;
+  const filled=franchises.filter(f=>f.links.trim());if(!filled.length)return null;
+  let s=`@echo off\r\nsetlocal EnableExtensions\r\n\r\necho Iniciando descarga de b-roll...\r\n\r\n`;
+  s+=`set "YTDLP=${YTDLP}"\r\nset "COOKIES=${COOKIES}"\r\nset "DENO_EXE="\r\n\r\n`;
+  s+=`if not exist "%YTDLP%" (echo ERROR: No se encontro yt-dlp & pause & exit /b 1)\r\n`;
+  s+=`if not exist "%COOKIES%" (echo ERROR: No se encontro cookies.txt & pause & exit /b 1)\r\n\r\n`;
+  s+=`for /f "delims=" %%I in ('where deno.exe 2^>nul') do (if not defined DENO_EXE set "DENO_EXE=%%I")\r\n`;
+  s+=`if not defined DENO_EXE if exist "%USERPROFILE%\\.deno\\bin\\deno.exe" set "DENO_EXE=%USERPROFILE%\\.deno\\bin\\deno.exe"\r\n`;
+  s+=`if not defined DENO_EXE if exist "%LOCALAPPDATA%\\Microsoft\\WinGet\\Links\\deno.exe" set "DENO_EXE=%LOCALAPPDATA%\\Microsoft\\WinGet\\Links\\deno.exe"\r\n`;
+  s+=`if not defined DENO_EXE if exist "%LOCALAPPDATA%\\Deno\\bin\\deno.exe" set "DENO_EXE=%LOCALAPPDATA%\\Deno\\bin\\deno.exe"\r\n\r\n`;
+  s+=`if not defined DENO_EXE (echo ERROR: No se encontro deno.exe & pause & exit /b 1)\r\n\r\n`;
+  s+=`echo Deno: "%DENO_EXE%"\r\necho.\r\n\r\n`;
+  for(const f of filled){
+    const folder=sanitize(f.name);
+    const links=parseLinks(f.links);
+    if(!links.length)continue;
+    s+=`echo --- ${f.name} ---\r\nif not exist "${BASE}\\${folder}" mkdir "${BASE}\\${folder}"\r\n`;
+    for(const{url,section}of links){
+      const sectionArgs=section?`--download-sections "*${section}" `:'';
+      const formatArgs=section?`-f "312+234/311+234"`:`-f "bv*[height<=1080]+ba/b[height<=1080]/best"`;
+      const outName=section?`%%(title)s_${sectionTag(section)}`:'%%(title)s';
+      s+=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github ${sectionArgs}${formatArgs} --merge-output-format mp4 -o "${BASE}\\${folder}\\${outName}.%%(ext)s" "${url}"\r\n`;
+    }
+    s+=`echo.\r\n`;
+  }
+  s+=`echo ¡Descarga completada!\r\npause\r\nendlocal`;
+  return s;
+}
+
+function buildMacDownload(){
+  const BASE=config.baseMac;
+  const filled=franchises.filter(f=>f.links.trim());if(!filled.length)return null;
+  let s=`#!/bin/bash\nset -e\n\necho "Iniciando descarga de b-roll..."\nBASE="${BASE}"\n\n`;
+  s+=`if ! command -v yt-dlp &>/dev/null; then\n  echo "ERROR: yt-dlp no encontrado. Instala con: brew install yt-dlp"\n  exit 1\nfi\n\n`;
+  for(const f of filled){
+    const folder=sanitize(f.name);
+    const links=parseLinks(f.links);
+    if(!links.length)continue;
+    s+=`echo "--- ${f.name} ---"\nmkdir -p "$BASE/${folder}"\n`;
+    for(const{url,section}of links){
+      const sectionArgs=section?`--download-sections "*${section}" `:'';
+      const formatArgs=section?`-f "312+234/311+234"`:`-f "bestvideo[height<=1080]+bestaudio/best[height<=1080]"`;
+      const outName=section?`%(title)s_${sectionTag(section)}`:'%(title)s';
+      s+=`yt-dlp --cookies-from-browser safari ${sectionArgs}${formatArgs} --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
+    }
+    s+=`echo\n`;
+  }
+  s+=`echo "¡Descarga completada!"`;
+  return s;
+}
+
+function buildUpload(){
+  const BASE=config.baseWin,RCLONE=config.rclone;
+  const filled=franchises.filter(f=>f.links.trim());if(!filled.length)return null;
+  let s=`@echo off\r\necho Subiendo b-roll a Google Drive...\r\n\r\n`;
+  for(const f of filled){const folder=sanitize(f.name);s+=`echo Subiendo ${f.name}...\r\nrclone copy "${BASE}\\${folder}" ${RCLONE}:broll/${folder} --progress\r\n`;}
+  s+=`\r\necho ¡Subida completada!\r\npause`;
+  return s;
+}
+
+function downloadScript(type){
+  const s=document.getElementById('dl-success'),e=document.getElementById('dl-error');
+  s.style.display='none';e.style.display='none';
+  let script,filename;
+  if(type==='win-download'){script=buildWinDownload();filename='descargar_broll.bat';}
+  else if(type==='mac-download'){script=buildMacDownload();filename='descargar_broll.sh';}
+  else{script=buildUpload();filename='subir_broll.bat';}
+  if(!script){e.textContent='Agrega al menos una franquicia con links.';e.style.display='block';return;}
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([script],{type:'application/octet-stream'}));
+  a.download=filename;a.click();
+  document.getElementById('dl-success-msg').textContent=`${filename} descargado — búscalo en tu carpeta de Descargas`;
+  s.style.display='inline-flex';
+}
+
+loadAll();
+</script>
