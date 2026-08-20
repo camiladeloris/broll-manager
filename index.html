@@ -370,7 +370,7 @@ function buildWinDownload(){
     s+=`echo --- ${f.name} ---\r\nif not exist "${BASE}\\${folder}" mkdir "${BASE}\\${folder}"\r\n`;
     for(const{url,section}of links){
       const sectionArgs=section?`--download-sections "*${section}" `:'';
-      const formatArgs=section?`-f "312+234/311+234/310+234/b[height<=1080]/bv*[height<=1080]+ba/best"`:`-f "bv*[height<=1080]+ba/b[height<=1080]/best"`;
+      const formatArgs=section?`-f "312+234/311+234/310+234/b[height<=1080]/best"`:`-f "bv*[height<=1080]+ba/b[height<=1080]/best"`;
       const outName=section?`%%(title)s_${sectionTag(section)}`:'%%(title)s';
       s+=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github ${sectionArgs}${formatArgs} --merge-output-format mp4 -o "${BASE}\\${folder}\\${outName}.%%(ext)s" "${url}"\r\n`;
     }
@@ -392,7 +392,7 @@ function buildMacDownload(){
     s+=`echo "--- ${f.name} ---"\nmkdir -p "$BASE/${folder}"\n`;
     for(const{url,section}of links){
       const sectionArgs=section?`--download-sections "*${section}" `:'';
-      const formatArgs=section?`-f "312+234/311+234/310+234/b[height<=1080]/bv*[height<=1080]+ba/best"`:`-f "bestvideo[height<=1080]+bestaudio/best[height<=1080]"`;
+      const formatArgs=section?`-f "312+234/311+234/310+234/b[height<=1080]/best"`:`-f "bestvideo[height<=1080]+bestaudio/best[height<=1080]"`;
       const outName=section?`%(title)s_${sectionTag(section)}`:'%(title)s';
       s+=`yt-dlp --cookies-from-browser safari ${sectionArgs}${formatArgs} --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
     }
