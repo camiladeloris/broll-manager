@@ -369,10 +369,12 @@ function buildWinDownload(){
     if(!links.length)continue;
     s+=`echo --- ${f.name} ---\r\nif not exist "${BASE}\\${folder}" mkdir "${BASE}\\${folder}"\r\n`;
     for(const{url,section}of links){
-      const sectionArgs=section?`--download-sections "*${section}" --force-keyframes-at-cuts `:'';
-      const formatArgs=section?`-f "312+ba[protocol^=m3u8]/311+ba[protocol^=m3u8]/310+ba[protocol^=m3u8]/232+ba[protocol^=m3u8]/b[height<=1080]/best"`:`-f "bv*[height<=1080]+ba/b[height<=1080]/best"`;
       const outName=section?`%%(title)s_${sectionTag(section)}`:'%%(title)s';
-      s+=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --retries 10 --fragment-retries 10 ${sectionArgs}${formatArgs} --merge-output-format mp4 -o "${BASE}\\${folder}\\${outName}.%%(ext)s" "${url}"\r\n`;
+      if(section){
+        s+=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --retries 10 --fragment-retries 10 --download-sections "*${section}" --force-keyframes-at-cuts -f "312+ba/311+ba/310+ba/270+ba/232+ba/b[height<=1080]+ba/best" --merge-output-format mp4 -o "${BASE}\\${folder}\\${outName}.%%(ext)s" "${url}"\r\n`;
+      }else{
+        s+=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --retries 10 --fragment-retries 10 -f "bv*[height<=1080]+ba/b[height<=1080]+ba/best" --merge-output-format mp4 -o "${BASE}\\${folder}\\${outName}.%%(ext)s" "${url}"\r\n`;
+      }
     }
     s+=`echo.\r\n`;
   }
@@ -391,10 +393,12 @@ function buildMacDownload(){
     if(!links.length)continue;
     s+=`echo "--- ${f.name} ---"\nmkdir -p "$BASE/${folder}"\n`;
     for(const{url,section}of links){
-      const sectionArgs=section?`--download-sections "*${section}" --force-keyframes-at-cuts `:'';
-      const formatArgs=section?`-f "312+ba[protocol^=m3u8]/311+ba[protocol^=m3u8]/310+ba[protocol^=m3u8]/232+ba[protocol^=m3u8]/b[height<=1080]/best"`:`-f "bestvideo[height<=1080]+bestaudio/best[height<=1080]"`;
       const outName=section?`%(title)s_${sectionTag(section)}`:'%(title)s';
-      s+=`yt-dlp --cookies-from-browser safari --retries 10 --fragment-retries 10 ${sectionArgs}${formatArgs} --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
+      if(section){
+        s+=`yt-dlp --cookies-from-browser safari --retries 10 --fragment-retries 10 --download-sections "*${section}" --force-keyframes-at-cuts -f "312+ba/311+ba/310+ba/270+ba/232+ba/b[height<=1080]+ba/best" --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
+      }else{
+        s+=`yt-dlp --cookies-from-browser safari --retries 10 --fragment-retries 10 -f "bestvideo[height<=1080]+bestaudio/best[height<=1080]+ba/best" --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
+      }
     }
     s+=`echo\n`;
   }
