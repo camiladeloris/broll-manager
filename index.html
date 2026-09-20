@@ -371,9 +371,9 @@ function buildWinDownload(){
     for(const{url,section}of links){
       const outName=section?`%%(title)s_${sectionTag(section)}`:'%%(title)s';
       if(section){
-        s+=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari,mweb" --retries 15 --fragment-retries 20 --concurrent-fragments 4 --download-sections "*${section}" --downloader-args "ffmpeg_i:-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "${BASE}\\${folder}\\${outName}.%%(ext)s" "${url}"\r\n`;
+        s+=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari" --retries 15 --fragment-retries 20 --concurrent-fragments 4 --download-sections "*${section}" --force-keyframes-at-cuts --downloader-args "ffmpeg_i:-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "${BASE}\\${folder}\\${outName}.%%(ext)s" "${url}"\r\n`;
       }else{
-        s+=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari,mweb" --retries 10 --fragment-retries 10 --concurrent-fragments 4 -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "${BASE}\\${folder}\\${outName}.%%(ext)s" "${url}"\r\n`;
+        s+=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari" --retries 10 --fragment-retries 10 --concurrent-fragments 4 -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "${BASE}\\${folder}\\${outName}.%%(ext)s" "${url}"\r\n`;
       }
     }
     s+=`echo.\r\n`;
@@ -395,9 +395,9 @@ function buildMacDownload(){
     for(const{url,section}of links){
       const outName=section?`%(title)s_${sectionTag(section)}`:'%(title)s';
       if(section){
-        s+=`yt-dlp --cookies-from-browser safari --extractor-args "youtube:player_client=default,web_safari,mweb" --retries 15 --fragment-retries 20 --concurrent-fragments 4 --download-sections "*${section}" --downloader-args "ffmpeg_i:-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
+        s+=`yt-dlp --cookies-from-browser safari --extractor-args "youtube:player_client=default,web_safari" --retries 15 --fragment-retries 20 --concurrent-fragments 4 --download-sections "*${section}" --force-keyframes-at-cuts --downloader-args "ffmpeg_i:-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
       }else{
-        s+=`yt-dlp --cookies-from-browser safari --extractor-args "youtube:player_client=default,web_safari,mweb" --retries 10 --fragment-retries 10 --concurrent-fragments 4 -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
+        s+=`yt-dlp --cookies-from-browser safari --extractor-args "youtube:player_client=default,web_safari" --retries 10 --fragment-retries 10 --concurrent-fragments 4 -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
       }
     }
     s+=`echo\n`;
