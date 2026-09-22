@@ -385,15 +385,16 @@ function buildWinDownload(){
       const cuts=secs.filter(x=>x);
       const wantFull=secs.some(x=>!x);
       const YT_COMMON=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari" --concurrent-fragments 4 -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4`;
+      const ARIA=` --downloader aria2c --downloader-args "aria2c:-x 16 -s 16 -k 1M --console-log-level=warn --summary-interval=0"`;
       if(cuts.length===0){
-        s+=`${YT_COMMON} --retries 10 --fragment-retries 10 -o "${BASE}\\${folder}\\%%(title)s.%%(ext)s" "${url}"\r\n`;
+        s+=`${YT_COMMON}${ARIA} --retries 10 --fragment-retries 10 -o "${BASE}\\${folder}\\%%(title)s.%%(ext)s" "${url}"\r\n`;
       }else if(cuts.length===1 && !wantFull){
         const section=cuts[0];
         s+=`${YT_COMMON} --retries 15 --fragment-retries 20 --download-sections "*${section}" --force-keyframes-at-cuts -o "${BASE}\\${folder}\\%%(title)s_${sectionTag(section)}.%%(ext)s" "${url}"\r\n`;
       }else{
         s+=`set "TDIR=%TEMP%\\broll_${gi}_%RANDOM%"\r\n`;
         s+=`if not exist "!TDIR!" mkdir "!TDIR!"\r\n`;
-        s+=`${YT_COMMON} --retries 15 --fragment-retries 20 -o "!TDIR!\\%%(title)s.%%(ext)s" "${url}"\r\n`;
+        s+=`${YT_COMMON}${ARIA} --retries 15 --fragment-retries 20 -o "!TDIR!\\%%(title)s.%%(ext)s" "${url}"\r\n`;
         s+=`set "SRC="\r\nfor %%F in ("!TDIR!\\*.mp4") do (set "SRC=%%~fF"& set "STITLE=%%~nF")\r\n`;
         s+=`if not defined SRC (echo ERROR: descarga fallo para ${url} & goto skip_${gi})\r\n`;
         if(wantFull){
