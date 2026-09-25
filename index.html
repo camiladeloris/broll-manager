@@ -205,8 +205,8 @@ function renderFranchises(){
         <input type="text" placeholder="nombre (ej: Resident Evil, State of Play, X-Twitter)" value="${esc(f.name)}" oninput="updateFranchise(${f.id},'name',this.value)" />
         <button class="btn btn-icon" onclick="removeFranchise(${f.id})" aria-label="eliminar"><i class="ti ti-trash" style="font-size:15px;" aria-hidden="true"></i></button>
       </div>
-      <textarea rows="4" placeholder="links de YouTube o X/Twitter, uno por línea — para bajar solo un fragmento agrega el rango después del link: https://youtu.be/xxxx 2:15-2:25" oninput="updateFranchise(${f.id},'links',this.value);syncLinksToHistory(${f.id})">${esc(f.links)}</textarea>
-      <p style="font-size:11px;color:#ccc;margin-top:6px;"><i class="ti ti-scissors" style="font-size:11px;" aria-hidden="true"></i> tip: agrega un rango tipo <code style="background:#f2f0f0;padding:1px 5px;border-radius:4px;">2:15-2:25</code> después de un link para bajar solo ese fragmento</p>
+      <textarea rows="4" placeholder="links de YouTube o X/Twitter, uno por línea — link, rango opcional y nombre opcional: https://youtu.be/xxxx 2:15-2:25 wesker entra al lab" oninput="updateFranchise(${f.id},'links',this.value);syncLinksToHistory(${f.id})">${esc(f.links)}</textarea>
+      <p style="font-size:11px;color:#ccc;margin-top:6px;"><i class="ti ti-scissors" style="font-size:11px;" aria-hidden="true"></i> tip: <code style="background:#f2f0f0;padding:1px 5px;border-radius:4px;">link 2:15-2:25 nombre del clip</code> baja solo ese fragmento con ese nombre. El rango y el nombre son opcionales.</p>
     </div>
   `).join('');
 }
@@ -215,11 +215,13 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').repla
 function sanitize(s){return(s||'').trim().replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'');}
 
 const TIME_RANGE_RE=/^\d{1,2}(:\d{2}){1,2}-\d{1,2}(:\d{2}){1,2}$/;
+function cleanFileName(s){return(s||'').replace(/[\\\/:*?"<>|%!^&\x00-\x1f]/g,'').replace(/\s+/g,' ').trim().slice(0,120);}
 function parseLinkLine(line){
   const parts=line.trim().split(/\s+/);
   const url=parts[0];
   const section=(parts[1]&&TIME_RANGE_RE.test(parts[1]))?parts[1]:null;
-  return{url,section};
+  const name=cleanFileName(parts.slice(section?2:1).join(' '))||null;
+  return{url,section,name};
 }
 function parseLinks(rawText){
   return rawText.split('\n').map(l=>l.trim()).filter(l=>l.startsWith('http')).map(parseLinkLine);
@@ -246,10 +248,10 @@ async function syncLinksToHistory(franchiseId){
   const parsed=parseLinks(f.links);
   const folder=f.name||'sin carpeta';
   const keyOf=(url,section)=>url+'|'+(section||'');
-  for(const{url,section}of parsed){
+  for(const{url,section,name}of parsed){
     const exists=history.find(h=>keyOf(h.url,h.section)===keyOf(url,section));
-    if(exists){if(exists.folder!==folder){exists.folder=folder;localStorage.setItem(SK_HISTORY,JSON.stringify(history));}continue;}
-    const entry={id:Date.now()+Math.random(),url,section,folder,title:'cargando...',channel:'...',platform:'',addedAt:new Date().toLocaleDateString('es-MX'),loading:true};
+    if(exists){if(exists.folder!==folder||exists.name!==name){exists.folder=folder;exists.name=name;localStorage.setItem(SK_HISTORY,JSON.stringify(history));}continue;}
+    const entry={id:Date.now()+Math.random(),url,section,name,folder,title:'cargando...',channel:'...',platform:'',addedAt:new Date().toLocaleDateString('es-MX'),loading:true};
     history.unshift(entry);
     localStorage.setItem(SK_HISTORY,JSON.stringify(history));
     fetchVideoInfo(url).then(info=>{
@@ -277,7 +279,7 @@ function renderHistory(){
   const grouped={};
   history.forEach(h=>{const k=h.folder||'sin carpeta';if(!grouped[k])grouped[k]=[];grouped[k].push(h);});
   c.innerHTML=Object.entries(grouped).map(([folder,items])=>{
-    if(folderOpenState[folder]===undefined)folderOpenState[folder]=true;
+    if(folderOpenState[folder]===undefined)folderOpenState[folder]=false;
     const isOpen=folderOpenState[folder];
     return `<div class="folder-block">
       <button class="folder-toggle ${isOpen?'open':''}" onclick="toggleFolder('${esc(folder)}')">
@@ -289,7 +291,7 @@ function renderHistory(){
         ${items.map(h=>`<div class="history-item">
           <div style="margin-top:2px;color:#ccc;font-size:13px;"><i class="ti ti-${h.platform==='YouTube'?'brand-youtube':h.platform==='X / Twitter'?'brand-x':'link'}" aria-hidden="true"></i></div>
           <div class="history-meta">
-            <div class="history-title">${esc(h.loading?h.url:h.title)}${h.section?` <span style="font-size:10px;font-weight:500;color:#7060c0;background:#f0ecfc;border-radius:5px;padding:1px 6px;">${esc(h.section)}</span>`:''}</div>
+            <div class="history-title">${esc(h.loading?h.url:h.title)}${h.section?` <span style="font-size:10px;font-weight:500;color:#7060c0;background:#f0ecfc;border-radius:5px;padding:1px 6px;">${esc(h.section)}</span>`:''}${h.name?` <span style="font-size:10px;font-weight:500;color:#2d7a50;background:#e8f5ee;border-radius:5px;padding:1px 6px;">${esc(h.name)}</span>`:''}</div>
             <div class="history-channel">${h.loading?'buscando canal...':esc(h.channel)+' · '+h.addedAt}</div>
             <div class="history-url">${esc(h.url)}</div>
           </div>
@@ -350,6 +352,7 @@ function exportHistory(){
   a.download='creditos_broll.txt';a.click();
 }
 
+const SHORT_VIDEO_MAX_SECONDS=600;
 function buildWinDownload(){
   const BASE=config.baseWin,YTDLP=config.ytdlp,COOKIES=config.cookies;
   const filled=franchises.filter(f=>f.links.trim());if(!filled.length)return null;
@@ -376,35 +379,53 @@ function buildWinDownload(){
     if(!links.length)continue;
     s+=`echo --- ${f.name} ---\r\nif not exist "${BASE}\\${folder}" mkdir "${BASE}\\${folder}"\r\n`;
     const groups=new Map();
+    const usedNames=new Set();
+    const uniqueName=n=>{if(!n)return null;let c=n,i=2;while(usedNames.has(c.toLowerCase()))c=`${n} ${i++}`;usedNames.add(c.toLowerCase());return c;};
     for(const link of links){
       if(!groups.has(link.url))groups.set(link.url,[]);
-      groups.get(link.url).push(link.section);
+      groups.get(link.url).push({section:link.section,name:uniqueName(link.name)});
     }
-    for(const[url,secs]of groups){
+    for(const[url,entries]of groups){
       gi++;
-      const cuts=secs.filter(x=>x);
-      const wantFull=secs.some(x=>!x);
-      const YT_COMMON=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari" --concurrent-fragments 4 -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4`;
+      const cuts=entries.filter(e=>e.section);
+      const fullEntry=entries.find(e=>!e.section);
+      const YT_COMMON=`"%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari" --concurrent-fragments 4 -f "bv*[height<=1080][vcodec*=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4`;
       const ARIA=` --downloader aria2c --downloader-args "aria2c:-x 16 -s 16 -k 1M --console-log-level=warn --summary-interval=0"`;
-      if(cuts.length===0){
-        s+=`${YT_COMMON}${ARIA} --retries 10 --fragment-retries 10 -o "${BASE}\\${folder}\\%%(title)s.%%(ext)s" "${url}"\r\n`;
-      }else if(cuts.length===1 && !wantFull){
-        const section=cuts[0];
-        s+=`${YT_COMMON} --retries 15 --fragment-retries 20 --download-sections "*${section}" --force-keyframes-at-cuts -o "${BASE}\\${folder}\\%%(title)s_${sectionTag(section)}.%%(ext)s" "${url}"\r\n`;
-      }else{
-        s+=`set "TDIR=%TEMP%\\broll_${gi}_%RANDOM%"\r\n`;
-        s+=`if not exist "!TDIR!" mkdir "!TDIR!"\r\n`;
-        s+=`${YT_COMMON}${ARIA} --retries 15 --fragment-retries 20 -o "!TDIR!\\%%(title)s.%%(ext)s" "${url}"\r\n`;
-        s+=`set "SRC="\r\nfor %%F in ("!TDIR!\\*.mp4") do (set "SRC=%%~fF"& set "STITLE=%%~nF")\r\n`;
-        s+=`if not defined SRC (echo ERROR: descarga fallo para ${url} & goto skip_${gi})\r\n`;
-        if(wantFull){
-          s+=`copy /Y "!SRC!" "${BASE}\\${folder}\\!STITLE!.mp4" >nul\r\n`;
+      const fullAndCut=failTarget=>{
+        let b=`set "TDIR=%TEMP%\\broll_${gi}_%RANDOM%"\r\n`;
+        b+=`if not exist "!TDIR!" mkdir "!TDIR!"\r\n`;
+        b+=`${YT_COMMON}${ARIA} --retries 15 --fragment-retries 20 -o "!TDIR!\\%%(title)s.%%(ext)s" "${url}"\r\n`;
+        b+=`set "SRC="\r\nfor %%F in ("!TDIR!\\*.mp4") do (set "SRC=%%~fF"& set "STITLE=%%~nF")\r\n`;
+        b+=`if not defined SRC (echo ERROR: descarga fallo para ${url} & rmdir /S /Q "!TDIR!" 2>nul & goto ${failTarget})\r\n`;
+        if(fullEntry){
+          b+=`copy /Y "!SRC!" "${BASE}\\${folder}\\${fullEntry.name||'!STITLE!'}.mp4" >nul\r\n`;
         }
-        for(const section of cuts){
+        for(const{section,name}of cuts){
           const[ss,to]=section.split('-');
-          s+=`"%FFMPEG_EXE%" -y -ss ${ss} -to ${to} -i "!SRC!" -c copy -avoid_negative_ts make_zero "${BASE}\\${folder}\\!STITLE!_${sectionTag(section)}.mp4"\r\n`;
+          const out=name||`!STITLE!_${sectionTag(section)}`;
+          b+=`"%FFMPEG_EXE%" -y -ss ${ss} -to ${to} -i "!SRC!" -c:v libx264 -preset veryfast -crf 18 -c:a aac -b:a 192k -movflags +faststart "${BASE}\\${folder}\\${out}.mp4"\r\n`;
         }
-        s+=`del /Q "!SRC!"\r\nrmdir /S /Q "!TDIR!"\r\n:skip_${gi}\r\n`;
+        b+=`del /Q "!SRC!"\r\nrmdir /S /Q "!TDIR!"\r\n`;
+        return b;
+      };
+      if(cuts.length===0){
+        const out=fullEntry.name||'%%(title)s';
+        s+=`${YT_COMMON}${ARIA} --retries 10 --fragment-retries 10 -o "${BASE}\\${folder}\\${out}.%%(ext)s" "${url}"\r\n`;
+      }else if(cuts.length===1 && !fullEntry){
+        const{section,name}=cuts[0];
+        const out=name||`%%(title)s_${sectionTag(section)}`;
+        s+=`set "DUR="\r\n`;
+        s+=`for /f "usebackq delims=" %%D in (\`call "%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari" --skip-download --no-warnings --print "%%(duration)d" "${url}" 2^>nul\`) do set "DUR=%%D"\r\n`;
+        s+=`set "SHORT="\r\nif defined DUR if !DUR! LEQ ${SHORT_VIDEO_MAX_SECONDS} set "SHORT=1"\r\n`;
+        s+=`if not defined SHORT goto long_${gi}\r\n`;
+        s+=`echo Video corto (!DUR!s): bajando completo y cortando\r\n`;
+        s+=fullAndCut(`long_${gi}`);
+        s+=`goto done_${gi}\r\n:long_${gi}\r\n`;
+        s+=`${YT_COMMON} --retries 15 --fragment-retries 20 --download-sections "*${section}" --force-keyframes-at-cuts -o "${BASE}\\${folder}\\${out}.%%(ext)s" "${url}"\r\n`;
+        s+=`:done_${gi}\r\n`;
+      }else{
+        s+=fullAndCut(`skip_${gi}`);
+        s+=`:skip_${gi}\r\n`;
       }
     }
     s+=`echo.\r\n`;
@@ -423,8 +444,8 @@ function buildMacDownload(){
     const links=parseLinks(f.links);
     if(!links.length)continue;
     s+=`echo "--- ${f.name} ---"\nmkdir -p "$BASE/${folder}"\n`;
-    for(const{url,section}of links){
-      const outName=section?`%(title)s_${sectionTag(section)}`:'%(title)s';
+    for(const{url,section,name}of links){
+      const outName=name||(section?`%(title)s_${sectionTag(section)}`:'%(title)s');
       if(section){
         s+=`yt-dlp --cookies-from-browser safari --extractor-args "youtube:player_client=default,web_safari" --retries 15 --fragment-retries 20 --concurrent-fragments 4 --download-sections "*${section}" --force-keyframes-at-cuts -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
       }else{
