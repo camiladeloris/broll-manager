@@ -352,7 +352,7 @@ function exportHistory(){
   a.download='creditos_broll.txt';a.click();
 }
 
-const SHORT_VIDEO_MAX_SECONDS=600;
+const SHORT_VIDEO_MAX_SECONDS=3600;
 function buildWinDownload(){
   const BASE=config.baseWin,YTDLP=config.ytdlp,COOKIES=config.cookies;
   const filled=franchises.filter(f=>f.links.trim());if(!filled.length)return null;
@@ -418,7 +418,7 @@ function buildWinDownload(){
         s+=`for /f "usebackq delims=" %%D in (\`call "%YTDLP%" --cookies "%COOKIES%" --js-runtimes "deno:%DENO_EXE%" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari" --skip-download --no-warnings --print "%%(duration)d" "${url}" 2^>nul\`) do set "DUR=%%D"\r\n`;
         s+=`set "SHORT="\r\nif defined DUR if !DUR! LEQ ${SHORT_VIDEO_MAX_SECONDS} set "SHORT=1"\r\n`;
         s+=`if not defined SHORT goto long_${gi}\r\n`;
-        s+=`echo Video corto (!DUR!s): bajando completo y cortando\r\n`;
+        s+=`echo Video de !DUR!s: bajando completo y cortando\r\n`;
         s+=fullAndCut(`long_${gi}`);
         s+=`goto done_${gi}\r\n:long_${gi}\r\n`;
         s+=`${YT_COMMON} --retries 15 --fragment-retries 20 --download-sections "*${section}" --force-keyframes-at-cuts -o "${BASE}\\${folder}\\${out}.%%(ext)s" "${url}"\r\n`;
