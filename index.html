@@ -89,9 +89,11 @@ textarea{resize:none;line-height:1.6;font-family:monospace;font-size:12px;}
 
     <div style="margin-top:1rem;padding:10px 14px;background:#f5f4f2;border-radius:8px;">
       <p style="font-size:12px;color:#aaa;margin-bottom:4px;font-weight:500;"><i class="ti ti-brand-apple" aria-hidden="true"></i> cómo usar el .sh en Mac</p>
-      <p style="font-size:12px;color:#888;line-height:1.7;">Después de descargar, abre Terminal y corre:<br>
-      <code style="font-size:11px;background:#eee;padding:2px 6px;border-radius:4px;">chmod +x ~/Downloads/descargar_broll.sh && ~/Downloads/descargar_broll.sh</code><br>
-      <span style="margin-top:4px;display:block;">Mac pedirá acceso a Safari la primera vez — acepta.</span></p>
+      <p style="font-size:12px;color:#888;line-height:1.7;">Una sola vez: instala lo necesario con Homebrew<br>
+      <code style="font-size:11px;background:#eee;padding:2px 6px;border-radius:4px;">brew install yt-dlp ffmpeg deno aria2</code><br>
+      y dale a Terminal <b>Acceso total al disco</b> (Ajustes del Sistema → Privacidad y seguridad) para que pueda leer las cookies de Safari. Ten tu sesión de YouTube abierta en Safari.<br>
+      <span style="margin-top:4px;display:block;">Después de descargar el .sh, abre Terminal y corre:</span>
+      <code style="font-size:11px;background:#eee;padding:2px 6px;border-radius:4px;">bash ~/Downloads/descargar_broll.sh</code></p>
     </div>
   </div>
 
@@ -353,6 +355,16 @@ function exportHistory(){
 }
 
 const SHORT_VIDEO_MAX_SECONDS=3600;
+function groupLinks(links){
+  const groups=new Map();
+  const usedNames=new Set();
+  const uniqueName=n=>{if(!n)return null;let c=n,i=2;while(usedNames.has(c.toLowerCase()))c=`${n} ${i++}`;usedNames.add(c.toLowerCase());return c;};
+  for(const link of links){
+    if(!groups.has(link.url))groups.set(link.url,[]);
+    groups.get(link.url).push({section:link.section,name:uniqueName(link.name)});
+  }
+  return groups;
+}
 function buildWinDownload(){
   const BASE=config.baseWin,YTDLP=config.ytdlp,COOKIES=config.cookies;
   const filled=franchises.filter(f=>f.links.trim());if(!filled.length)return null;
@@ -378,14 +390,7 @@ function buildWinDownload(){
     const links=parseLinks(f.links);
     if(!links.length)continue;
     s+=`echo --- ${f.name} ---\r\nif not exist "${BASE}\\${folder}" mkdir "${BASE}\\${folder}"\r\n`;
-    const groups=new Map();
-    const usedNames=new Set();
-    const uniqueName=n=>{if(!n)return null;let c=n,i=2;while(usedNames.has(c.toLowerCase()))c=`${n} ${i++}`;usedNames.add(c.toLowerCase());return c;};
-    for(const link of links){
-      if(!groups.has(link.url))groups.set(link.url,[]);
-      groups.get(link.url).push({section:link.section,name:uniqueName(link.name)});
-    }
-    for(const[url,entries]of groups){
+    for(const[url,entries]of groupLinks(links)){
       gi++;
       const cuts=entries.filter(e=>e.section);
       const fullEntry=entries.find(e=>!e.section);
@@ -434,28 +439,87 @@ function buildWinDownload(){
   return s;
 }
 
+function shq(s){return "'"+String(s).replace(/'/g,"'\\''")+"'";}
 function buildMacDownload(){
-  const BASE=config.baseMac;
   const filled=franchises.filter(f=>f.links.trim());if(!filled.length)return null;
-  let s=`#!/bin/bash\nset -e\n\necho "Iniciando descarga de b-roll..."\nBASE="${BASE}"\n\n`;
-  s+=`if ! command -v yt-dlp &>/dev/null; then\n  echo "ERROR: yt-dlp no encontrado. Instala con: brew install yt-dlp"\n  exit 1\nfi\n\n`;
+  const base=(config.baseMac||'~/broll').trim();
+  const baseExpr=base==='~'?'"$HOME"':base.startsWith('~/')?`"$HOME"/${shq(base.slice(2))}`:shq(base);
+  const L=[
+    `#!/bin/bash`,
+    ``,
+    `echo "Iniciando descarga de b-roll..."`,
+    `BASE=${baseExpr}`,
+    ``,
+    `need(){ command -v "$1" >/dev/null 2>&1 || { echo "ERROR: falta $1. Instalalo con: brew install $2"; exit 1; }; }`,
+    `need yt-dlp yt-dlp`,
+    `need ffmpeg ffmpeg`,
+    `DENO="$(command -v deno)"`,
+    `[ -z "$DENO" ] && [ -x "$HOME/.deno/bin/deno" ] && DENO="$HOME/.deno/bin/deno"`,
+    `[ -z "$DENO" ] && { echo "ERROR: falta deno. Instalalo con: brew install deno"; exit 1; }`,
+    ``,
+    `YT=(yt-dlp --cookies-from-browser safari --js-runtimes "deno:$DENO" --remote-components ejs:github --extractor-args "youtube:player_client=default,web_safari" --concurrent-fragments 4 -f "bv*[height<=1080][vcodec*=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4)`,
+    `ARIA=()`,
+    `if command -v aria2c >/dev/null 2>&1; then`,
+    `  ARIA=(--downloader aria2c --downloader-args "aria2c:-x 16 -s 16 -k 1M --console-log-level=warn --summary-interval=0")`,
+    `else`,
+    `  echo "Aviso: sin aria2c los videos completos bajan mas lento. Instalalo con: brew install aria2"`,
+    `fi`,
+    `echo "Deno: $DENO"`,
+    `echo`,
+    ``,
+    `duration(){ "\${YT[@]}" --skip-download --no-warnings --print "%(duration)d" "$1" 2>/dev/null | tail -n 1; }`,
+    `full_dl(){ "\${YT[@]}" "\${ARIA[@]}" --retries 10 --fragment-retries 10 -o "$2/$3.%(ext)s" "$1"; }`,
+    `sections_dl(){ "\${YT[@]}" --retries 15 --fragment-retries 20 --download-sections "*$3-$4" --force-keyframes-at-cuts -o "$2/$5.%(ext)s" "$1"; }`,
+    `# full_and_cut URL DEST GUARDAR_COMPLETO NOMBRE_COMPLETO [INICIO FIN NOMBRE SUFIJO]...`,
+    `full_and_cut(){`,
+    `  local url="$1" dest="$2" keep="$3" fullname="$4"; shift 4`,
+    `  local tdir; tdir="$(mktemp -d "\${TMPDIR:-/tmp}/broll.XXXXXX")"`,
+    `  "\${YT[@]}" "\${ARIA[@]}" --retries 15 --fragment-retries 20 -o "$tdir/%(title)s.%(ext)s" "$url"`,
+    `  local files=("$tdir"/*.mp4)`,
+    `  if [ ! -e "\${files[0]}" ]; then echo "ERROR: descarga fallo para $url"; rm -rf "$tdir"; return 1; fi`,
+    `  local src="\${files[0]}"`,
+    `  local title; title="$(basename "$src" .mp4)"`,
+    `  if [ "$keep" = 1 ]; then cp "$src" "$dest/\${fullname:-$title}.mp4"; fi`,
+    `  while [ $# -ge 4 ]; do`,
+    `    local name="$3" suffix="$4"`,
+    `    ffmpeg -nostdin -hide_banner -loglevel warning -stats -y -ss "$1" -to "$2" -i "$src" -c:v libx264 -preset veryfast -crf 18 -c:a aac -b:a 192k -movflags +faststart "$dest/\${name:-$title$suffix}.mp4"`,
+    `    shift 4`,
+    `  done`,
+    `  rm -rf "$tdir"`,
+    `}`,
+    ``,
+  ];
   for(const f of filled){
-    const folder=sanitize(f.name);
     const links=parseLinks(f.links);
     if(!links.length)continue;
-    s+=`echo "--- ${f.name} ---"\nmkdir -p "$BASE/${folder}"\n`;
-    for(const{url,section,name}of links){
-      const outName=name||(section?`%(title)s_${sectionTag(section)}`:'%(title)s');
-      if(section){
-        s+=`yt-dlp --cookies-from-browser safari --extractor-args "youtube:player_client=default,web_safari" --retries 15 --fragment-retries 20 --concurrent-fragments 4 --download-sections "*${section}" --force-keyframes-at-cuts -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
+    L.push(`echo ${shq('--- '+f.name+' ---')}`,`DEST="$BASE"/${shq(sanitize(f.name))}`,`mkdir -p "$DEST"`);
+    for(const[url,entries]of groupLinks(links)){
+      const cuts=entries.filter(e=>e.section);
+      const fullEntry=entries.find(e=>!e.section);
+      const clipArgs=cuts.map(({section,name})=>{const[ss,to]=section.split('-');return `${shq(ss)} ${shq(to)} ${shq(name||'')} ${shq('_'+sectionTag(section))}`;}).join(' ');
+      if(cuts.length===0){
+        L.push(`full_dl ${shq(url)} "$DEST" ${shq(fullEntry.name||'%(title)s')}`);
+      }else if(cuts.length===1&&!fullEntry){
+        const{section,name}=cuts[0];
+        const[ss,to]=section.split('-');
+        const sec=`sections_dl ${shq(url)} "$DEST" ${shq(ss)} ${shq(to)} ${shq(name||`%(title)s_${sectionTag(section)}`)}`;
+        L.push(
+          `DUR="$(duration ${shq(url)})"`,
+          `if [[ "$DUR" =~ ^[0-9]+$ ]] && [ "$DUR" -le ${SHORT_VIDEO_MAX_SECONDS} ]; then`,
+          `  echo "Video de \${DUR}s: bajando completo y cortando"`,
+          `  full_and_cut ${shq(url)} "$DEST" 0 '' ${clipArgs} || ${sec}`,
+          `else`,
+          `  ${sec}`,
+          `fi`
+        );
       }else{
-        s+=`yt-dlp --cookies-from-browser safari --extractor-args "youtube:player_client=default,web_safari" --retries 10 --fragment-retries 10 --concurrent-fragments 4 -f "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]" --merge-output-format mp4 -o "$BASE/${folder}/${outName}.%(ext)s" "${url}"\n`;
+        L.push(`full_and_cut ${shq(url)} "$DEST" ${fullEntry?1:0} ${shq(fullEntry&&fullEntry.name||'')} ${clipArgs}`);
       }
     }
-    s+=`echo\n`;
+    L.push(`echo`);
   }
-  s+=`echo "¡Descarga completada!"`;
-  return s;
+  L.push(`echo "¡Descarga completada!"`,``);
+  return L.join('\n');
 }
 
 function buildUpload(){
